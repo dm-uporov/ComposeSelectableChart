@@ -27,8 +27,8 @@ fun SelectablePieChart(
     segments: List<PieChartSegmentData>,
     indexOfSelectedSegment: Int,
     modifier: Modifier = Modifier,
-    segmentsThickness: Float = 100f,
-    selectedSegmentsThickness: Float = 120f,
+    segmentsThickness: Dp = 34.dp,
+    selectedSegmentsThickness: Dp = 40.dp,
     rotationDegrees: Float = 0f,
     pointAtZeroDegreesClockwise: PointAtZeroDegreesClockwise = PointAtZeroDegreesClockwise.START_OF_FIRST_SEGMENT,
     spaceBetweenSegmentsDegree: Float = 3f,
@@ -48,7 +48,7 @@ fun SelectablePieChart(
         val segmentSweepAngle = (item.weight / itemsSumWeight * pureSegmentsSpace).toFloat()
 
         val offset: Dp
-        val segmentThickness: Float
+        val segmentThickness: Dp
         if (index == indexOfSelectedSegment) {
             offset = selectedSegmentsOffset
             segmentThickness = selectedSegmentsThickness
@@ -103,7 +103,7 @@ fun SelectablePieChart(
     ) {
         items.forEach {
             val offsetState by animateDpAsState(targetValue = it.offset)
-            val thicknessState by animateFloatAsState(targetValue = it.thickness)
+            val thicknessState by animateDpAsState(targetValue = it.thickness)
             PieChartSegment(
                 startAngleDegrees = it.startAngleDegrees,
                 sweepAngleDegrees = it.sweepAngleDegrees,
@@ -130,7 +130,7 @@ private val defaultTweenRotationAnimationSpec: AnimationSpec<Float> = tween(
 private data class SegmentItem(
     val startAngleDegrees: Float,
     val sweepAngleDegrees: Float,
-    val thickness: Float,
+    val thickness: Dp,
     val color: Color,
     val offset: Dp,
 )
@@ -149,13 +149,13 @@ enum class PointAtZeroDegreesClockwise {
 private fun PieChartSegment(
     startAngleDegrees: Float,
     sweepAngleDegrees: Float,
-    thickness: Float,
+    thickness: Dp,
     color: Color,
     modifier: Modifier = Modifier,
 ) {
     Canvas(modifier = modifier.fillMaxSize()) {
         val outerRadius = min(size.width, size.height) / 2f
-        val innerRadius = outerRadius - thickness
+        val innerRadius = outerRadius - thickness.toPx()
 
         val path = Path().apply {
             arcTo(

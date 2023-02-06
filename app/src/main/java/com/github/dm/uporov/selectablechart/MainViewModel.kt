@@ -37,14 +37,14 @@ class MainViewModel : ViewModel() {
         get() = segments.size
 
     private val _uiState = MutableStateFlow(
-        PieChartState(
+        MainUiState(
             segments = segments,
             selectedSegmentIndex = 0,
             possibleToAdd = true,
             possibleToRemove = true,
         )
     )
-    val uiState: StateFlow<PieChartState> = _uiState.asStateFlow()
+    val uiState: StateFlow<MainUiState> = _uiState.asStateFlow()
 
     private val selectedSegment
         get() = _uiState.value.selectedSegmentIndex

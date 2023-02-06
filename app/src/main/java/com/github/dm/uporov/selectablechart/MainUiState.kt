@@ -1,6 +1,6 @@
 package com.github.dm.uporov.selectablechart
 
-data class PieChartState(
+data class MainUiState(
     val segments: List<PieChartSegmentData>,
     val selectedSegmentIndex: Int,
     val possibleToRemove: Boolean,
