@@ -74,7 +74,7 @@ fun SelectablePieChart(
         PointAtZeroDegreesClockwise.START_OF_FIRST_SEGMENT -> 0f
         PointAtZeroDegreesClockwise.MIDDLE_OF_FIRST_SEGMENT -> -(items.first().sweepAngleDegrees / 2f)
         PointAtZeroDegreesClockwise.END_OF_FIRST_SEGMENT -> -(items.first().sweepAngleDegrees)
-        PointAtZeroDegreesClockwise.START_OF_SELECTED_SEGMENT -> selectedItemStartAngle ?: 0f
+        PointAtZeroDegreesClockwise.START_OF_SELECTED_SEGMENT -> -(selectedItemStartAngle ?: 0f)
         PointAtZeroDegreesClockwise.MIDDLE_OF_SELECTED_SEGMENT -> {
             val start = selectedItemStartAngle
             val sweep = selectedItemSweepAngle

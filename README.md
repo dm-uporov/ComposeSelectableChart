@@ -1,4 +1,4 @@
-# ComposeSelectableChart — a pie chart with posibility to select one specific segment.
+# ComposeSelectableChart — a pie chart with possibility to select one specific segment.
 
 This repository is just a showcase of using custom layouts and animations of Jetpack Compose.
 
