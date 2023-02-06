@@ -29,40 +29,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
                 ) {
-                    var selected by remember { mutableStateOf(false) }
-                    val weight by animateFloatAsState(if (selected) 0.5f else 0.5f)
-                    val indexOfSelected: MutableState<Int> = remember { mutableStateOf(0) }
-                    val items = listOf(
-                        PieChartSegmentSimpleData(0.2, Color.Red),
-                        PieChartSegmentSimpleData(0.32, Color.Blue),
-                        PieChartSegmentSimpleData(0.21, Color.Blue),
-                        PieChartSegmentSimpleData(0.25, Color.Blue),
-                        PieChartSegmentSimpleData(0.2, Color.Blue),
-                        PieChartSegmentSimpleData(weight.toDouble(), Color.Cyan),
-                        PieChartSegmentSimpleData(0.4, Color.Magenta),
-                    )
-
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        SelectablePieChart(
-                            segments = items,
-                            indexOfSelectedState = indexOfSelected,
-                            rotationDegrees = 180f,
-                            firstElementClockwise = FirstElementClockwise.MIDDLE_OF_SELECTED,
-                            modifier = Modifier
-                                .padding(16.dp)
-                        )
-                        Button(onClick = {
-                            selected = !selected
-                            val newIndex = indexOfSelected.value + 1
-                            if (newIndex < items.size) {
-                                indexOfSelected.value = newIndex
-                            } else {
-                                indexOfSelected.value = 0
-                            }
-                        }) {
-                            Text(text = "Click me!")
-                        }
-                    }
+                    MainScreen()
                 }
             }
         }
@@ -72,17 +39,43 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun Preview() {
+    MainScreen()
+}
+
+@Composable
+fun MainScreen() {
+    var selected by remember { mutableStateOf(false) }
+    val weight by animateFloatAsState(if (selected) 0.5f else 0.5f)
+    val indexOfSelected: MutableState<Int> = remember { mutableStateOf(0) }
     val items = listOf(
-        PieChartSegmentSimpleData(0.1, Color.Red),
-        PieChartSegmentSimpleData(0.3, Color.Blue),
-        PieChartSegmentSimpleData(0.45, Color.Cyan),
-        PieChartSegmentSimpleData(0.2, Color.Magenta),
+        PieChartSegmentSimpleData(0.2, Color.Red),
+        PieChartSegmentSimpleData(0.32, Color.Blue),
+        PieChartSegmentSimpleData(0.21, Color.Blue),
+        PieChartSegmentSimpleData(0.25, Color.Blue),
+        PieChartSegmentSimpleData(0.2, Color.Blue),
+        PieChartSegmentSimpleData(weight.toDouble(), Color.Cyan),
+        PieChartSegmentSimpleData(0.4, Color.Magenta),
     )
-    SelectablePieChart(
-        segments = items,
-        modifier = Modifier.padding(16.dp),
-        indexOfSelectedState = ToolingState(0),
-        rotationDegrees = 180f,
-        firstElementClockwise = FirstElementClockwise.MIDDLE_OF_SELECTED,
-    )
+
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        SelectablePieChart(
+            segments = items,
+            indexOfSelectedState = indexOfSelected,
+            rotationDegrees = 180f,
+            pointAtZeroDegreesClockwise = PointAtZeroDegreesClockwise.MIDDLE_OF_SELECTED_SEGMENT,
+            modifier = Modifier
+                .padding(16.dp)
+        )
+        Button(onClick = {
+            selected = !selected
+            val newIndex = indexOfSelected.value + 1
+            if (newIndex < items.size) {
+                indexOfSelected.value = newIndex
+            } else {
+                indexOfSelected.value = 0
+            }
+        }) {
+            Text(text = "Click me!")
+        }
+    }
 }

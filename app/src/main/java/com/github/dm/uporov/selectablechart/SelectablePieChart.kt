@@ -1,7 +1,6 @@
 package com.github.dm.uporov.selectablechart
 
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -16,8 +15,13 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlin.math.cos
 import kotlin.math.min
+import kotlin.math.sin
+
+private const val MAX_DEGREES = 360f
 
 @Composable
 fun SelectablePieChart(
@@ -27,15 +31,16 @@ fun SelectablePieChart(
     segmentsThickness: Float = 100f,
     selectedSegmentsThickness: Float = 120f,
     rotationDegrees: Float = 0f,
-    firstElementClockwise: FirstElementClockwise = FirstElementClockwise.START_OF_FIRST,
-    spaceBetweenDegree: Float = 4f,
-    segmentsPadding: Dp = 12.dp,
-    selectedSegmentsPadding: Dp = 0.dp,
+    pointAtZeroDegreesClockwise: PointAtZeroDegreesClockwise = PointAtZeroDegreesClockwise.START_OF_FIRST_SEGMENT,
+    spaceBetweenSegmentsDegree: Float = 3f,
+    segmentsOffset: Dp = 0.dp,
+    selectedSegmentsOffset: Dp = 12.dp,
+    rotationAnimationSpec: AnimationSpec<Float> = defaultTweenRotationAnimationSpec
 ) {
     if (segments.isEmpty()) return
 
     val itemsSumWeight = segments.sumOf { it.weight }
-    val pureSegmentsSpace = 360f - (segments.size * spaceBetweenDegree)
+    val pureSegmentsSpace = MAX_DEGREES - (segments.size * spaceBetweenSegmentsDegree)
     val indexOfSelected = indexOfSelectedState.value
 
     var selectedItemStartAngle: Float? = null
@@ -44,35 +49,35 @@ fun SelectablePieChart(
     val items: List<SegmentItem> = segments.mapIndexed { index, item ->
         val segmentSweepAngle = (item.weight / itemsSumWeight * pureSegmentsSpace).toFloat()
 
-        val padding: Dp
+        val offset: Dp
         val segmentThickness: Float
         if (index == indexOfSelected) {
-            padding = selectedSegmentsPadding
+            offset = selectedSegmentsOffset
             segmentThickness = selectedSegmentsThickness
             selectedItemStartAngle = nextStartAngle
             selectedItemSweepAngle = segmentSweepAngle
         } else {
-            padding = segmentsPadding
+            offset = segmentsOffset
             segmentThickness = segmentsThickness
         }
         val startAngle = nextStartAngle
-        nextStartAngle += segmentSweepAngle + spaceBetweenDegree
+        nextStartAngle += segmentSweepAngle + spaceBetweenSegmentsDegree
 
         SegmentItem(
             startAngleDegrees = startAngle,
             sweepAngleDegrees = segmentSweepAngle,
             thickness = segmentThickness,
             color = item.color,
-            padding = padding
+            offset = offset
         )
     }
 
-    val rotation: Float = rotationDegrees + when (firstElementClockwise) {
-        FirstElementClockwise.START_OF_FIRST -> 0f
-        FirstElementClockwise.MIDDLE_OF_FIRST -> -(items.first().sweepAngleDegrees / 2f)
-        FirstElementClockwise.END_OF_FIRST -> -(items.first().sweepAngleDegrees)
-        FirstElementClockwise.START_OF_SELECTED -> selectedItemStartAngle ?: 0f
-        FirstElementClockwise.MIDDLE_OF_SELECTED -> {
+    val rotation: Float = rotationDegrees + when (pointAtZeroDegreesClockwise) {
+        PointAtZeroDegreesClockwise.START_OF_FIRST_SEGMENT -> 0f
+        PointAtZeroDegreesClockwise.MIDDLE_OF_FIRST_SEGMENT -> -(items.first().sweepAngleDegrees / 2f)
+        PointAtZeroDegreesClockwise.END_OF_FIRST_SEGMENT -> -(items.first().sweepAngleDegrees)
+        PointAtZeroDegreesClockwise.START_OF_SELECTED_SEGMENT -> selectedItemStartAngle ?: 0f
+        PointAtZeroDegreesClockwise.MIDDLE_OF_SELECTED_SEGMENT -> {
             val start = selectedItemStartAngle
             val sweep = selectedItemSweepAngle
             if (start == null || sweep == null) {
@@ -81,7 +86,7 @@ fun SelectablePieChart(
                 -start - (sweep / 2)
             }
         }
-        FirstElementClockwise.END_OF_SELECTED -> {
+        PointAtZeroDegreesClockwise.END_OF_SELECTED_SEGMENT -> {
             val start = selectedItemStartAngle
             val sweep = selectedItemSweepAngle
             if (start == null || sweep == null) {
@@ -92,44 +97,54 @@ fun SelectablePieChart(
         }
     }
 
-    val rotationState by animateFloatAsState(targetValue = rotation)
-
+    val rotationState by animateFloatAsState(rotation, rotationAnimationSpec)
     Box(
         modifier = modifier
             .squareSizeByMinSide()
             .rotate(rotationState)
     ) {
         items.forEach {
-            val paddingState by animateDpAsState(targetValue = it.padding)
+            val offsetState by animateDpAsState(targetValue = it.offset)
             val thicknessState by animateFloatAsState(targetValue = it.thickness)
             PieChartSegment(
                 startAngleDegrees = it.startAngleDegrees,
                 sweepAngleDegrees = it.sweepAngleDegrees,
                 thickness = thicknessState,
                 color = it.color,
-                // TODO change to offset with lambda on performance reason
-                modifier = Modifier.offset(paddingState)
+                modifier = Modifier.offset {
+                    val offsetPx = offsetState.toPx()
+                    val median = it.startAngleDegrees + (it.sweepAngleDegrees / 2.0)
+                    val rad = Math.toRadians(median)
+                    val x = cos(rad) * offsetPx
+                    val y = sin(rad) * offsetPx
+                    IntOffset(x.toInt(), y.toInt())
+                }
             )
         }
     }
 }
+
+private val defaultTweenRotationAnimationSpec: AnimationSpec<Float> = tween(
+    durationMillis = 500,
+    easing = Ease
+)
 
 private data class SegmentItem(
     val startAngleDegrees: Float,
     val sweepAngleDegrees: Float,
     val thickness: Float,
     val color: Color,
-    val padding: Dp,
+    val offset: Dp,
 )
 
 
-enum class FirstElementClockwise {
-    START_OF_FIRST,
-    MIDDLE_OF_FIRST,
-    END_OF_FIRST,
-    START_OF_SELECTED,
-    MIDDLE_OF_SELECTED,
-    END_OF_SELECTED
+enum class PointAtZeroDegreesClockwise {
+    START_OF_FIRST_SEGMENT,
+    MIDDLE_OF_FIRST_SEGMENT,
+    END_OF_FIRST_SEGMENT,
+    START_OF_SELECTED_SEGMENT,
+    MIDDLE_OF_SELECTED_SEGMENT,
+    END_OF_SELECTED_SEGMENT
 }
 
 @Composable
