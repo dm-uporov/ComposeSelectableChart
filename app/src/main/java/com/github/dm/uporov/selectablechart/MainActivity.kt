@@ -3,10 +3,7 @@ package com.github.dm.uporov.selectablechart
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
@@ -14,10 +11,9 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.tooling.animation.ToolingState
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.dm.uporov.selectablechart.ui.theme.ComposeCustomLayoutTheme
 
 class MainActivity : ComponentActivity() {
@@ -43,39 +39,57 @@ fun Preview() {
 }
 
 @Composable
-fun MainScreen() {
-    var selected by remember { mutableStateOf(false) }
-    val weight by animateFloatAsState(if (selected) 0.5f else 0.5f)
-    val indexOfSelected: MutableState<Int> = remember { mutableStateOf(0) }
-    val items = listOf(
-        PieChartSegmentSimpleData(0.2, Color.Red),
-        PieChartSegmentSimpleData(0.32, Color.Blue),
-        PieChartSegmentSimpleData(0.21, Color.Blue),
-        PieChartSegmentSimpleData(0.25, Color.Blue),
-        PieChartSegmentSimpleData(0.2, Color.Blue),
-        PieChartSegmentSimpleData(weight.toDouble(), Color.Cyan),
-        PieChartSegmentSimpleData(0.4, Color.Magenta),
-    )
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    mainViewModel: MainViewModel = viewModel()
+) {
+    val uiState by mainViewModel.uiState.collectAsState()
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier
+    ) {
         SelectablePieChart(
-            segments = items,
-            indexOfSelectedState = indexOfSelected,
+            segments = uiState.segments,
+            indexOfSelectedSegment = uiState.selectedSegmentIndex,
             rotationDegrees = 180f,
             pointAtZeroDegreesClockwise = PointAtZeroDegreesClockwise.MIDDLE_OF_SELECTED_SEGMENT,
             modifier = Modifier
                 .padding(16.dp)
         )
-        Button(onClick = {
-            selected = !selected
-            val newIndex = indexOfSelected.value + 1
-            if (newIndex < items.size) {
-                indexOfSelected.value = newIndex
-            } else {
-                indexOfSelected.value = 0
+        Row {
+            Button(onClick = mainViewModel::onPreviousClicked) {
+                Text(text = "Select Previous".uppercase())
             }
-        }) {
-            Text(text = "Click me!")
+            Spacer(modifier = Modifier.size(width = 8.dp, height = 0.dp))
+            Button(onClick = mainViewModel::onNextClicked) {
+                Text(text = "Select Next".uppercase())
+            }
+        }
+        Row {
+            Button(onClick = mainViewModel::onRandomClicked) {
+                Text(text = "Select Random".uppercase())
+            }
+            Spacer(modifier = Modifier.size(width = 8.dp, height = 0.dp))
+            Button(onClick = mainViewModel::onUnselectClicked) {
+                Text(text = "Unselect".uppercase())
+            }
+        }
+
+        Row {
+            Button(
+                onClick = mainViewModel::onRemoveClicked,
+                enabled = uiState.possibleToRemove,
+            ) {
+                Text(text = "Remove".uppercase())
+            }
+            Spacer(modifier = Modifier.size(width = 8.dp, height = 0.dp))
+            Button(
+                onClick = mainViewModel::onAddClicked,
+                enabled = uiState.possibleToAdd,
+            ) {
+                Text(text = "Add".uppercase())
+            }
         }
     }
 }

@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -26,8 +25,8 @@ private const val MAX_DEGREES = 360f
 @Composable
 fun SelectablePieChart(
     segments: List<PieChartSegmentData>,
+    indexOfSelectedSegment: Int,
     modifier: Modifier = Modifier,
-    indexOfSelectedState: State<Int>,
     segmentsThickness: Float = 100f,
     selectedSegmentsThickness: Float = 120f,
     rotationDegrees: Float = 0f,
@@ -41,7 +40,6 @@ fun SelectablePieChart(
 
     val itemsSumWeight = segments.sumOf { it.weight }
     val pureSegmentsSpace = MAX_DEGREES - (segments.size * spaceBetweenSegmentsDegree)
-    val indexOfSelected = indexOfSelectedState.value
 
     var selectedItemStartAngle: Float? = null
     var selectedItemSweepAngle: Float? = null
@@ -51,7 +49,7 @@ fun SelectablePieChart(
 
         val offset: Dp
         val segmentThickness: Float
-        if (index == indexOfSelected) {
+        if (index == indexOfSelectedSegment) {
             offset = selectedSegmentsOffset
             segmentThickness = selectedSegmentsThickness
             selectedItemStartAngle = nextStartAngle
