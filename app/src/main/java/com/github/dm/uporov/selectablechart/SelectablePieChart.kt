@@ -104,9 +104,11 @@ fun SelectablePieChart(
         items.forEach {
             val offsetState by animateDpAsState(targetValue = it.offset)
             val thicknessState by animateDpAsState(targetValue = it.thickness)
+            val startAngle by animateFloatAsState(targetValue = it.startAngleDegrees)
+            val sweepAngle by animateFloatAsState(targetValue = it.sweepAngleDegrees)
             PieChartSegment(
-                startAngleDegrees = it.startAngleDegrees,
-                sweepAngleDegrees = it.sweepAngleDegrees,
+                startAngleDegrees = startAngle,
+                sweepAngleDegrees = sweepAngle,
                 thickness = thicknessState,
                 color = it.color,
                 modifier = Modifier.offset {

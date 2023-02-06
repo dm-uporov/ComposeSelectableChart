@@ -7,4 +7,4 @@ But feel free to play, reuse and share.
 
 
 ## Demo
-<img src="https://github.com/dm-uporov/ComposeSelectableChart/blob/master/demo.gif" width="360" height="640" />
+<img src="https://github.com/dm-uporov/ComposeSelectableChart/blob/master/demonstration.gif" width="360" height="640" />
