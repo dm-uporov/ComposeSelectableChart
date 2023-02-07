@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -98,12 +97,28 @@ fun SelectablePieChart(
         }
     }
 
-    val rotationState by animateFloatAsState(rotation, rotationAnimationSpec)
+    val rotationState = remember { Animatable(rotation) }
+    LaunchedEffect(rotation) {
+        launch {
+            // Before rotation we need to correct current degree due to rotate by the smallest move
+            val currentRotation = rotationState.value
+            val diff = rotation - currentRotation
+            if (diff > 180) {
+                rotationState.snapTo(currentRotation + 360)
+            } else if (diff < -180) {
+                rotationState.snapTo(currentRotation - 360)
+            }
+
+            rotationState.animateTo(rotation, rotationAnimationSpec)
+        }
+    }
     Box(
         modifier = modifier
             .squareSizeByMinSide()
+            // We need to use graphicsLayer instead of rotation on performance purpose
+            // This way we don't recompose every animation frame, but redraw
             .graphicsLayer {
-                rotationZ = rotationState
+                rotationZ = rotationState.value
             }
     ) {
         items.forEach { PieChartSegment(it) }
@@ -143,6 +158,7 @@ private fun PieChartSegment(
     val thickness = remember { Animatable(item.thickness, DpToVector) }
     val offset = remember { Animatable(item.offset, DpToVector) }
 
+    // Four animation executes simultaneously
     LaunchedEffect(key1 = item) {
         launch {
             startAngleDegrees.animateTo(item.startAngleDegrees)
@@ -157,7 +173,7 @@ private fun PieChartSegment(
             offset.animateTo(item.offset)
         }
     }
-    
+
     Canvas(modifier = modifier
         .offset {
             val offsetPx = offset.value.toPx()

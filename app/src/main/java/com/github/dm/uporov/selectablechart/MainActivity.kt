@@ -54,8 +54,7 @@ fun MainScreen(
             indexOfSelectedSegment = uiState.selectedSegmentIndex,
             rotationDegrees = 180f,
             pointAtZeroDegreesClockwise = PointAtZeroDegreesClockwise.MIDDLE_OF_SELECTED_SEGMENT,
-            modifier = Modifier
-                .padding(16.dp)
+            modifier = Modifier.padding(32.dp)
         )
         Row {
             Button(onClick = mainViewModel::onPreviousClicked) {
