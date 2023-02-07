@@ -6,16 +6,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import kotlin.math.cos
 import kotlin.math.min
 import kotlin.math.sin
@@ -99,28 +102,11 @@ fun SelectablePieChart(
     Box(
         modifier = modifier
             .squareSizeByMinSide()
-            .rotate(rotationState)
+            .graphicsLayer {
+                rotationZ = rotationState
+            }
     ) {
-        items.forEach {
-            val offsetState by animateDpAsState(targetValue = it.offset)
-            val thicknessState by animateDpAsState(targetValue = it.thickness)
-            val startAngle by animateFloatAsState(targetValue = it.startAngleDegrees)
-            val sweepAngle by animateFloatAsState(targetValue = it.sweepAngleDegrees)
-            PieChartSegment(
-                startAngleDegrees = startAngle,
-                sweepAngleDegrees = sweepAngle,
-                thickness = thicknessState,
-                color = it.color,
-                modifier = Modifier.offset {
-                    val offsetPx = offsetState.toPx()
-                    val median = it.startAngleDegrees + (it.sweepAngleDegrees / 2.0)
-                    val rad = Math.toRadians(median)
-                    val x = cos(rad) * offsetPx
-                    val y = sin(rad) * offsetPx
-                    IntOffset(x.toInt(), y.toInt())
-                }
-            )
-        }
+        items.forEach { PieChartSegment(it) }
     }
 }
 
@@ -149,24 +135,50 @@ enum class PointAtZeroDegreesClockwise {
 
 @Composable
 private fun PieChartSegment(
-    startAngleDegrees: Float,
-    sweepAngleDegrees: Float,
-    thickness: Dp,
-    color: Color,
+    item: SegmentItem,
     modifier: Modifier = Modifier,
 ) {
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val outerRadius = min(size.width, size.height) / 2f
-        val innerRadius = outerRadius - thickness.toPx()
+    val startAngleDegrees = remember { Animatable(item.startAngleDegrees) }
+    val sweepAngleDegrees = remember { Animatable(0f) }
+    val thickness = remember { Animatable(item.thickness, DpToVector) }
+    val offset = remember { Animatable(item.offset, DpToVector) }
 
+    LaunchedEffect(key1 = item) {
+        launch {
+            startAngleDegrees.animateTo(item.startAngleDegrees)
+        }
+        launch {
+            sweepAngleDegrees.animateTo(item.sweepAngleDegrees)
+        }
+        launch {
+            thickness.animateTo(item.thickness)
+        }
+        launch {
+            offset.animateTo(item.offset)
+        }
+    }
+    
+    Canvas(modifier = modifier
+        .offset {
+            val offsetPx = offset.value.toPx()
+            val median = item.startAngleDegrees + (item.sweepAngleDegrees / 2.0)
+            val rad = Math.toRadians(median)
+            val x = cos(rad) * offsetPx
+            val y = sin(rad) * offsetPx
+            IntOffset(x.toInt(), y.toInt())
+        }
+        .fillMaxSize()
+    ) {
+        val outerRadius = min(size.width, size.height) / 2f
+        val innerRadius = outerRadius - thickness.value.toPx()
         val path = Path().apply {
             arcTo(
                 rect = Rect(
                     center = Offset(outerRadius, outerRadius),
                     radius = outerRadius
                 ),
-                startAngleDegrees = startAngleDegrees,
-                sweepAngleDegrees = sweepAngleDegrees,
+                startAngleDegrees = startAngleDegrees.value,
+                sweepAngleDegrees = sweepAngleDegrees.value,
                 forceMoveTo = true,
             )
 
@@ -175,12 +187,17 @@ private fun PieChartSegment(
                     center = Offset(outerRadius, outerRadius),
                     radius = innerRadius
                 ),
-                startAngleDegrees = startAngleDegrees + sweepAngleDegrees,
-                sweepAngleDegrees = -sweepAngleDegrees,
+                startAngleDegrees = startAngleDegrees.value + sweepAngleDegrees.value,
+                sweepAngleDegrees = -sweepAngleDegrees.value,
                 forceMoveTo = false,
             )
         }
 
-        drawPath(path = path, color = color)
+        drawPath(path = path, color = item.color)
     }
 }
+
+private val DpToVector: TwoWayConverter<Dp, AnimationVector1D> = TwoWayConverter(
+    convertToVector = { AnimationVector1D(it.value) },
+    convertFromVector = { Dp(it.value) }
+)

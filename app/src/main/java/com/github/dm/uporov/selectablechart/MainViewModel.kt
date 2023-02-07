@@ -11,9 +11,9 @@ import kotlin.random.Random
 private fun generateSegmentsList(): List<PieChartSegmentData> = listOf(
     randomSegment(),
     randomSegment(),
-    randomSegment(),
-    randomSegment(),
-    randomSegment(),
+//    randomSegment(),
+//    randomSegment(),
+//    randomSegment(),
 )
 
 private fun randomSegment() = SimplePieChartSegmentData(
